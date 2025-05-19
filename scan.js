@@ -47,31 +47,26 @@ const externalServices = [
 ];
 
 function isSuspiciousNode(node, axiosAliases) {
-  // cek fungsi/pola AST
   for (const s of suspicious) {
     if (node.type === s.type) {
-      // CallExpression
       if (
         s.type === 'CallExpression' &&
         node.callee?.type === 'Identifier' &&
         node.callee.name === s.name
       ) return true;
 
-      // NewExpression
       if (
         s.type === 'NewExpression' &&
         node.callee?.type === 'Identifier' &&
         node.callee.name === s.name
       ) return true;
 
-      // MemberExpression
       if (s.type === 'MemberExpression') {
         const left = node.object?.name;
         const right = node.property?.name;
         if (`${left}.${right}` === s.name) return true;
       }
 
-      // axios via MemberExpression
       if (
         s.name === 'axios' &&
         node.callee?.type === 'MemberExpression' &&
@@ -80,7 +75,6 @@ function isSuspiciousNode(node, axiosAliases) {
     }
   }
 
-  // axios alias usage
   if (
     node.type === 'CallExpression' &&
     node.callee?.type === 'MemberExpression'
@@ -91,19 +85,16 @@ function isSuspiciousNode(node, axiosAliases) {
     }
   }
 
-  // dynamic import
   if (node.type === 'ImportExpression') {
     return true;
   }
 
-  // cek literal string URL untuk external services
   if (node.type === 'Literal' && typeof node.value === 'string') {
     for (const re of externalServices) {
       if (re.test(node.value)) return true;
     }
   }
 
-  // cek template literal
   if (node.type === 'TemplateLiteral') {
     const raw = node.quasis.map(q => q.value.raw).join(' ');
     for (const re of externalServices) {
@@ -124,7 +115,6 @@ function scanFile(filePath) {
     return [];
   }
 
-  // detect axios import aliases
   const axiosAliases = new Set();
   estraverse.traverse(ast, {
     enter(node) {
@@ -154,7 +144,6 @@ function scanFile(filePath) {
   return findings;
 }
 
-// main
 const resultsByFile = {};
 let totalFindings = 0;
 
@@ -181,11 +170,11 @@ glob(pattern, { nodir: true }, (err, files) => {
     }, null, 2));
   } else {
     Object.entries(resultsByFile).forEach(([file, findings]) => {
-      console.log(chalk.blue.bold(`\n📄 ${file} (temuan: ${findings.length})`));
+      console.log(chalk.blue(`\n📄 ${file} (temuan: ${findings.length})`));
       findings.forEach(f => {
         console.log(chalk.yellow(`  [baris ${f.line}]`), chalk.gray(f.snippet));
       });
     });
-    console.log(chalk.green.bold(`\n✅ Selesai. Total file: ${files.length}, file dengan temuan: ${Object.keys(resultsByFile).length}, total temuan: ${totalFindings}`));
+    console.log(chalk.green(`\n✅ Selesai. Total file: ${files.length}, file dengan temuan: ${Object.keys(resultsByFile).length}, total temuan: ${totalFindings}`));
   }
 });
