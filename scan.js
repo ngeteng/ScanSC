@@ -5,7 +5,9 @@ const path = require('path');
 const glob = require('glob');
 const espree = require('espree');
 const estraverse = require('estraverse');
-const chalk = require('chalk');
+// Fix import for Chalk ESM default
+const chalkImport = require('chalk');
+const chalk = chalkImport.default ?? chalkImport;
 const { Command } = require('commander');
 const os = require('os');
 
