@@ -1,18 +1,3 @@
-/**
- * anti-logger.js v1.2.0
- *
- * CLI tool untuk scan file .js/.jsx mencari pola-pola API
- * yang sering dipakai untuk mencuri/leak data:
- * - fetch, XMLHttpRequest, axios, WebSocket, sendBeacon
- * - document.cookie, localStorage, sessionStorage
- * - eval/Function dengan URL/string dinamis
- * - dynamic import('...')
- * - panggilan ke Telegram Bot API, Discord Webhook, Facebook Graph API, Slack Webhook
- *
- * Usage:
- *   anti-logger <pattern> [--json]
- *
- */
 #!/usr/bin/env node
 
 const fs = require('fs');
