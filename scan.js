@@ -50,33 +50,59 @@ function isSuspiciousNode(node, axiosAliases) {
   // cek fungsi/pola AST
   for (const s of suspicious) {
     if (node.type === s.type) {
-      if (s.type === 'CallExpression' && node.callee.type === 'Identifier' && node.callee.name === s.name) return true;
-      if (s.type === 'NewExpression' && node.callee.type === 'Identifier' && node.callee.name === s.name) return true;
+      // CallExpression
+      if (
+        s.type === 'CallExpression' &&
+        node.callee?.type === 'Identifier' &&
+        node.callee.name === s.name
+      ) return true;
+
+      // NewExpression
+      if (
+        s.type === 'NewExpression' &&
+        node.callee?.type === 'Identifier' &&
+        node.callee.name === s.name
+      ) return true;
+
+      // MemberExpression
       if (s.type === 'MemberExpression') {
-        const left = node.object && node.object.name;
-        const right = node.property && node.property.name;
+        const left = node.object?.name;
+        const right = node.property?.name;
         if (`${left}.${right}` === s.name) return true;
       }
-      if (s.name === 'axios' && node.callee.type === 'MemberExpression' && node.callee.object.name === 'axios') return true;
+
+      // axios via MemberExpression
+      if (
+        s.name === 'axios' &&
+        node.callee?.type === 'MemberExpression' &&
+        node.callee.object?.name === 'axios'
+      ) return true;
     }
   }
-  // axios alias
-  if (node.type === 'CallExpression' && node.callee.type === 'MemberExpression') {
+
+  // axios alias usage
+  if (
+    node.type === 'CallExpression' &&
+    node.callee?.type === 'MemberExpression'
+  ) {
     const obj = node.callee.object;
-    if (obj.type === 'Identifier' && axiosAliases.has(obj.name)) {
+    if (obj?.type === 'Identifier' && axiosAliases.has(obj.name)) {
       return true;
     }
   }
+
   // dynamic import
   if (node.type === 'ImportExpression') {
     return true;
   }
+
   // cek literal string URL untuk external services
   if (node.type === 'Literal' && typeof node.value === 'string') {
     for (const re of externalServices) {
       if (re.test(node.value)) return true;
     }
   }
+
   // cek template literal
   if (node.type === 'TemplateLiteral') {
     const raw = node.quasis.map(q => q.value.raw).join(' ');
@@ -84,6 +110,7 @@ function isSuspiciousNode(node, axiosAliases) {
       if (re.test(raw)) return true;
     }
   }
+
   return false;
 }
 
@@ -101,7 +128,10 @@ function scanFile(filePath) {
   const axiosAliases = new Set();
   estraverse.traverse(ast, {
     enter(node) {
-      if (node.type === 'ImportDeclaration' && node.source.value === 'axios') {
+      if (
+        node.type === 'ImportDeclaration' &&
+        node.source.value === 'axios'
+      ) {
         for (const spec of node.specifiers) {
           axiosAliases.add(spec.local.name);
         }
